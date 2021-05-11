@@ -1,9 +1,11 @@
 import React from 'react'
 
-export const SidePanel = () => {
+const Favorited = () => {
     return (
         <div>
-            SidePanel
+            Favorited
         </div>
     )
 }
+
+export default Favorited

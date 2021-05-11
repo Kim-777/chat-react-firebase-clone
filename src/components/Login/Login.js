@@ -5,7 +5,7 @@ import firebase from '../../firebase';
 
 const Login = () => {
 
-    const {register, handleSubmit, watch, formState: { errors } } = useForm();
+    const {register, handleSubmit, formState: { errors } } = useForm();
 
     const [loading, setLoading] = useState(false)
     const [errorFromSubmit, setErrorFromSubmit] = useState("");

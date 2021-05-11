@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import './App.css';
 import {
-  BrowserRouter as Router,
   Switch,
   Route,
   useHistory
@@ -12,14 +11,16 @@ import Register from './components/Register/Register';
 import firebase from './firebase';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  setUser
+  setUser,
+  clearUser,
 } from './redux/actions/user';
 
 function App() {
 
   const history = useHistory();
   const dispatch = useDispatch();
-  const { isLoading } = useSelector(({user}) => user);
+  const {isLoading} = useSelector(({user}) => user);
+
   useEffect(() => {
     firebase.auth().onAuthStateChanged(user => {
       console.log('user', user);
@@ -27,10 +28,12 @@ function App() {
       // login 상태
       if(user) {
         console.log('here')
-        dispatch(setUser(user));
         history.push("/");
+        dispatch(setUser(user));
       } else {
+        console.log('test clearUser')
         history.push("/login");
+        dispatch(clearUser());
       }
 
     });

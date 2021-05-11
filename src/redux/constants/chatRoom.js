@@ -1,0 +1,1 @@
+export const SET_CURRENT_CHATROOM = "chatRoom/SET_CURRENT_CHATROOM";
