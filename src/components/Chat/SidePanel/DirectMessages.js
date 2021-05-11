@@ -4,22 +4,30 @@ import {
 } from 'react-icons/fa';
 import firebase from '../../../firebase';
 import { connect } from 'react-redux'; 
+import {
+    setCurrentChatRoom,
+    setPrivateChatRoom,
+} from '../../../redux/actions/chatRoom';
 
 class DirectMessages extends Component {
 
     state = {
         usersRef: firebase.database().ref("users"),
         users: [],
+        activeChatRoom: "",
     }
 
     componentDidMount() {
         console.log('here directMessages');
-        console.log('usersssser', this.props.user);
-        if(this.props.user) {
-            console.log('why not?')
-            this.addUsersListeners(this.props.user.uid);
-        }
+        console.log('usersssser', this.props);
+        setTimeout(() => {
+            if(this.props.user) {
+                console.log('why not?')
+                this.addUsersListeners(this.props.user.uid);
+            }
+        }, 1000);
     }
+
 
     addUsersListeners = currentUserId => {
         const { usersRef } = this.state;
@@ -36,12 +44,48 @@ class DirectMessages extends Component {
         })
     }
 
-    renderDirectMessages = () => {
+    getChatRoomId = userId => {
+        const currentUserId = this.props.user.uid;
 
+        return userId > currentUserId ? `${userId} / ${currentUserId}` : `${currentUserId} / ${userId}`  
     }
 
+
+    changeChatRoom = user => {
+        const chatRoomId = this.getChatRoomId(user.uid);
+        const chatRoomData = {
+            id: chatRoomId,
+            name: user.name,
+        };
+
+        this.props.dispatch(setCurrentChatRoom(chatRoomData));
+        this.props.dispatch(setPrivateChatRoom(true));
+        this.setActiveChatRoom(user.uid);
+    };
+
+    setActiveChatRoom = userId => {
+        this.setState({activeChatRoom: userId})
+    }
+
+    renderDirectMessages = users => (
+        users.length > 0 &&
+        users.map(user => (
+            <li 
+                onClick={() => this.changeChatRoom(user)}
+                key={user.uid}
+                style={{
+                    backgroundColor: user.uid === this.state.activeChatRoom && "#FFFFFF45"
+                }}
+            >
+                # {user.name}
+            </li>
+        ))
+    )
+
     render() {
-        console.log('users', this.state.users)
+        
+        const { users } = this.state;
+
         return (
             <div>
                 <span style={{display: 'flex', alignItems: 'center'}}>
@@ -49,12 +93,13 @@ class DirectMessages extends Component {
                 </span>
 
                 <ul style={{ listStyleType: 'none', padding: 0}}>
-                    {this.renderDirectMessages}
+                    {this.renderDirectMessages(users)}
                 </ul>
             </div>
         )
     }
 }
+
 
 export default connect(
     ({user}) => ({
