@@ -15,7 +15,7 @@ const UserPanel = () => {
     const inputOpenImageRef = useRef(null);
 
     const user = useSelector(({user}) => user.currentUser);
-    console.log('userPanel', user);
+    // console.log('userPanel', user);
 
     const handleLogout = () => {
         firebase.auth().signOut();

@@ -23,11 +23,11 @@ function App() {
 
   useEffect(() => {
     firebase.auth().onAuthStateChanged(user => {
-      console.log('user', user);
+      // console.log('user', user);
 
       // login 상태
       if(user) {
-        console.log('here')
+        // console.log('here')
         history.push("/");
         dispatch(setUser(user));
       } else {
