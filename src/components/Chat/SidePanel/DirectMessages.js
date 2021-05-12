@@ -19,7 +19,6 @@ class DirectMessages extends Component {
 
     componentDidMount() {
         console.log('here directMessages');
-        console.log('usersssser', this.props);
         setTimeout(() => {
             if(this.props.user) {
                 console.log('why not?')
@@ -47,7 +46,7 @@ class DirectMessages extends Component {
     getChatRoomId = userId => {
         const currentUserId = this.props.user.uid;
 
-        return userId > currentUserId ? `${userId} / ${currentUserId}` : `${currentUserId} / ${userId}`  
+        return userId > currentUserId ? `${userId}/${currentUserId}` : `${currentUserId}/${userId}`  
     }
 
 

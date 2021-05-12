@@ -1,21 +1,103 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Image from "react-bootstrap/Image";
-import Accordion from 'react-bootstrap/Accordion';
-import Card from 'react-bootstrap/Card';
-import Button from 'react-bootstrap/Button';
+import Accordion from "react-bootstrap/Accordion";
+import Card from "react-bootstrap/Card";
+import Button from "react-bootstrap/Button";
 import { FaLock, FaLockOpen } from "react-icons/fa";
-import { MdFavorite } from "react-icons/md";
-import { FormControl, InputGroup } from "react-bootstrap";
+import { MdFavorite, MdFavoriteBorder } from "react-icons/md";
+import { FormControl, InputGroup, Media } from "react-bootstrap";
 import { AiOutlineSearch } from "react-icons/ai";
-import { useSelector } from 'react-redux';
+import { useSelector } from "react-redux";
+import firebase from "../../../firebase";
 
 const MessageHeader = ({ handleSearchChange }) => {
+    const {currentChatRoom:chatRoom, userPosts } = useSelector(({ chatRoom }) => chatRoom);
+    const isPrivateChatRoom = useSelector(
+        ({ chatRoom }) => chatRoom.isPrivateChatRoom
+    );
+    const user = useSelector(({ user }) => user.currentUser);
+    const [isFavorited, setIsFavorited] = useState(false);
+    const usersRef = firebase.database().ref("users");
 
-    const chatRoom = useSelector(({chatRoom}) => chatRoom.currentChatRoom);
-    const isPrivateChatRoom = useSelector(({chatRoom}) => chatRoom.isPrivateChatRoom);
+    const addFavoriteListener = useCallback(
+        (chatRoomId, userId) => {
+            usersRef
+                .child(userId)
+                .child("favorited")
+                .once("value")
+                .then((data) => {
+                    if (data.val()) {
+                        const chatRoomIds = Object.keys(data.val());
+
+                        console.log("data.val()", data.val());
+                        console.log("chatRoomIds", chatRoomIds);
+                        const isAlreadyFavorited = chatRoomIds.includes(chatRoomId)
+                        setIsFavorited(isAlreadyFavorited);
+                    }
+                });
+        },
+        [usersRef]
+    );
+
+
+    useEffect(() => {
+        if (user && chatRoom) {
+            addFavoriteListener(chatRoom.id, user.uid);
+        }
+    }, [user, addFavoriteListener, chatRoom]);
+
+    const handleFavorite = () => {
+        if (isFavorited) {
+            usersRef
+                .child(`${user.uid}/favorited`)
+                .child(chatRoom.id)
+                .remove((err) => {
+                    if (err) {
+                        console.error(err);
+                    }
+                });
+            setIsFavorited((prev) => !prev);
+        } else {
+            usersRef.child(`${user.uid}/favorited`).update({
+                [chatRoom.id]: {
+                    name: chatRoom.name,
+                    description: chatRoom.description,
+                    createdBy: {
+                        name: chatRoom.createdBy.name,
+                        image: chatRoom.createdBy.image,
+                    },
+                },
+            });
+            setIsFavorited((prev) => !prev);
+        }
+    };
+
+    const renderUserPosts = userPosts => (
+        Object.entries(userPosts)
+            .sort((a, b) => b[1].count - a[1].count)
+            .map(([key, val], i) => (
+                <Media key={i} style={{display: 'flex'}}>
+                    <img 
+                        style={{borderRadius: 25, marginRight:'10px'}}
+                        width={48}
+                        height={48}
+                        className="mr-3"
+                        src={val.image}
+                        alt={val.name}
+                    />
+                    <Media.Body>
+                        <h6>{key}</h6>
+                        <p>
+                            {val.count}개
+                        </p>
+                    </Media.Body>
+                </Media>
+            ))
+    )
+
     return (
         <div
             style={{
@@ -32,13 +114,29 @@ const MessageHeader = ({ handleSearchChange }) => {
                     <Col>
                         {" "}
                         <h4>
-                            {isPrivateChatRoom ?
-                            <FaLock style={{marginBottom: '10px'}}/>
-                            :
-                            <FaLockOpen style={{marginBottom: '10px'}}/>
-                            }
-                            {chatRoom && chatRoom.name} 
-                            <MdFavorite />
+                            {isPrivateChatRoom ? (
+                                <FaLock style={{ marginBottom: "10px" }} />
+                            ) : (
+                                <FaLockOpen style={{ marginBottom: "10px" }} />
+                            )}
+                            {chatRoom && chatRoom.name}
+
+                            {!isPrivateChatRoom && (
+                                <span
+                                    style={{ cursor: "pointer" }}
+                                    onClick={handleFavorite}
+                                >
+                                    {isFavorited ? (
+                                        <MdFavorite
+                                            style={{ marginBottom: "10px" }}
+                                        />
+                                    ) : (
+                                        <MdFavoriteBorder
+                                            style={{ marginBottom: "10px" }}
+                                        />
+                                    )}
+                                </span>
+                            )}
                         </h4>{" "}
                     </Col>
                     <Col>
@@ -59,16 +157,24 @@ const MessageHeader = ({ handleSearchChange }) => {
                         </InputGroup>
                     </Col>
                 </Row>
+                
+                {!isPrivateChatRoom &&
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <p>
-                        <Image src="" /> user name
+                        <Image 
+                            src={chatRoom && chatRoom.createdBy.image} 
+                            roundedCircle
+                            style={{width: '30px', height: '30px'}}
+                        />  {" "} {chatRoom && chatRoom.createdBy.name}
                     </p>
                 </div>
+                }
+
                 <Row>
                     <Col>
                         <Accordion>
                             <Card>
-                                <Card.Header style={{ padding:'0 1rem'}}>
+                                <Card.Header style={{ padding: "0 1rem" }}>
                                     <Accordion.Toggle
                                         as={Button}
                                         variant="link"
@@ -78,7 +184,9 @@ const MessageHeader = ({ handleSearchChange }) => {
                                     </Accordion.Toggle>
                                 </Card.Header>
                                 <Accordion.Collapse eventKey="0">
-                                    <Card.Body>Description</Card.Body>
+                                    <Card.Body>
+                                        {chatRoom && chatRoom.description}
+                                    </Card.Body>
                                 </Accordion.Collapse>
                             </Card>
                         </Accordion>
@@ -86,7 +194,7 @@ const MessageHeader = ({ handleSearchChange }) => {
                     <Col>
                         <Accordion>
                             <Card>
-                                <Card.Header style={{ padding:'0 1rem'}}>
+                                <Card.Header style={{ padding: "0 1rem" }}>
                                     <Accordion.Toggle
                                         as={Button}
                                         variant="link"
@@ -96,7 +204,9 @@ const MessageHeader = ({ handleSearchChange }) => {
                                     </Accordion.Toggle>
                                 </Card.Header>
                                 <Accordion.Collapse eventKey="0">
-                                    <Card.Body>Posts Count</Card.Body>
+                                    <Card.Body>
+                                        {userPosts && renderUserPosts(userPosts)}
+                                    </Card.Body>
                                 </Accordion.Collapse>
                             </Card>
                         </Accordion>

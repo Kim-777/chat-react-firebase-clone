@@ -1,6 +1,7 @@
 import {
     SET_CURRENT_CHATROOM,
     SET_PRIVATE_CHATROOM,
+    SET_USER_POSTS,
 } from '../constants/chatRoom';
 
 
@@ -14,3 +15,8 @@ export const setPrivateChatRoom = isPrivate => ({
     payload: isPrivate,
 })
 
+
+export const setUserPosts = userPosts => ({
+    type: SET_USER_POSTS,
+    payload: userPosts
+})
